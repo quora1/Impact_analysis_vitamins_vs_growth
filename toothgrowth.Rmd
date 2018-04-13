@@ -1,0 +1,79 @@
+---
+title: "Tooth Growth Analysis"
+author: "Wiktoria Urantowka"
+date: "8/20/2017"
+output:
+  pdf_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The goal of this report id to analyze the ToothGrowth data in R in order to investigate the impact of vitamine C on the tooth growth in ginea pigs. 
+
+###1.Loading the data and basic exploratory analysis###
+```{r}
+data(ToothGrowth)
+head(ToothGrowth)
+dim(ToothGrowth)
+str(ToothGrowth)
+```
+The data consists of 60 observations for 3 variables: Tooth length (numeric), supplement type, VC or OJ (factor) and the dosage in milligrams of this supplement (numeric) 
+```{r}
+library(ggplot2)
+qplot(supp,len,data=ToothGrowth, facets=~dose, main="Tooth growth by supplement type and dosage (mg)",xlab="Supplement", ylab="Tooth length") + geom_boxplot(aes(fill = supp))
+```
+ 
+One can observe a positive correlation between the dosage and the tooth growth.
+For lower dosage, the affect of VC seams weaker than OJ, but this difference dissapears with the highest dosage. 
+
+###2.Hypothesis Testing:###
+#### 1 Difference of effect between supplements####
+Ho =  no difference in tooth growth when using the supplement OJ and VC (lenOJ == lenVC)
+Ha = Tooth grow more when using supplement OJ instead of VC. (lenOJ>lenVC)
+
+Assumptions
+-Variances of tooth growth are different for different supplements and their dosage.
+-Tooth growth follows normal distribution.
+-variables are i.i.d.
+
+Procedure:
+- tooth growth by supplement type from the data
+```{r}
+OJ = ToothGrowth$len[ToothGrowth$supp == 'OJ']
+VC = ToothGrowth$len[ToothGrowth$supp == 'VC']
+```
+
+-One-tailed independent t-test with unequal variance.
+```{r}
+t.test(OJ, VC, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+As the p-value < 0.05 the null hypothesis is rejected. 
+--> Supplement OJ has bigger effect on tooth growth than supplement VC
+
+#### 2 Difference of effects among dosages####
+2.1(Comparaison between affect of dosage 0.5 and 1)
+Ho=  no difference in tooth growth between dosages. 
+Ha= more tooth growth when the dosage increases.
+
+Procedure:
+-tooth growth by dosage.
+```{r}
+doseHalf = ToothGrowth$len[ToothGrowth$dose == 0.5]
+doseOne = ToothGrowth$len[ToothGrowth$dose == 1]
+doseTwo = ToothGrowth$len[ToothGrowth$dose == 2]
+```
+
+-One-tailed independent t-test with unequal variance.
+```{r}
+t.test(doseHalf, doseOne, alternative = "less", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+As the p-value < 0.05 the null hypothesis is rejected. (There is a difference in effects on tooth growth for dosages 0.5 and 1, dosage 1 having bigger effect)
+
+2.2(Comparaison between affect of dosage 1 and 2)
+```{r}
+t.test(doseOne, doseTwo, alternative = "less", paired = FALSE, var.equal = FALSE, conf.level = 0.95)
+```
+As the p-value < 0.05 the null hypothesis is rejected. (There is a difference in effects on tooth growth for dosages 1 and 2, dosage 2 having bigger effect)
+
+--> Dosage matters: The more supplement, the more tooth growth
